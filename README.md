@@ -22,6 +22,9 @@ DB_PORT=3306
 DB_NAME=database_name
 DB_USER=database_user
 DB_PASSWORD=database_password
+
+JWT_SECRET=secret_password
+JWT_EXPIRES_IN=7d
 ```
 
 ### 3. Executar backend
