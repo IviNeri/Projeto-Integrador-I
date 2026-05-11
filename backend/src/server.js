@@ -19,7 +19,7 @@ const app = express();
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const productRoutes = require('./routes/product.routes');
-
+const categoryRoutes = require('./routes/category.routes');
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +45,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
+app.use('/categories', categoryRoutes);
 
 /*
 |--------------------------------------------------------------------------

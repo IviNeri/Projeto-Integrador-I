@@ -51,22 +51,53 @@ async function findAll(page, limit) {
     const [products] = await connection.execute(
         `
         SELECT
-            id,
-            name,
-            price,
-            stock,
-            category_id,
-            expiration_date,
-            created_at
+            products.id,
+            products.name,
+            products.price,
+            products.stock,
+            products.expiration_date,
+            products.created_at,
+
+            categories.id AS category_id,
+            categories.name AS category_name
+
         FROM products
-        WHERE deleted_at IS NULL
-        ORDER BY created_at DESC
+
+        LEFT JOIN categories
+            ON categories.id = products.category_id
+            AND categories.deleted_at IS NULL
+
+        WHERE products.deleted_at IS NULL
+
+        ORDER BY products.created_at DESC
+
         LIMIT ? OFFSET ?
         `,
         [
             limit,
             offset
         ]
+    );
+
+    const formattedProducts = products.map(
+        product => {
+
+            return {
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                stock: product.stock,
+                expiration_date: product.expiration_date,
+                created_at: product.created_at,
+
+                category: product.category_id
+                    ? {
+                        id: product.category_id,
+                        name: product.category_name
+                    }
+                    : null
+            };
+        }
     );
 
     const [totalResult] = await connection.execute(
@@ -78,7 +109,7 @@ async function findAll(page, limit) {
     );
 
     return {
-        products,
+        products: formattedProducts,
         total: totalResult[0].total
     };
 }
@@ -93,22 +124,51 @@ async function findById(id) {
     const [products] = await connection.execute(
         `
         SELECT
-            id,
-            name,
-            price,
-            stock,
-            category_id,
-            expiration_date,
-            created_at
+            products.id,
+            products.name,
+            products.price,
+            products.stock,
+            products.expiration_date,
+            products.created_at,
+
+            categories.id AS category_id,
+            categories.name AS category_name
+
         FROM products
-        WHERE id = ?
-        AND deleted_at IS NULL
+
+        LEFT JOIN categories
+            ON categories.id = products.category_id
+            AND categories.deleted_at IS NULL
+
+        WHERE products.id = ?
+        AND products.deleted_at IS NULL
+
         LIMIT 1
         `,
         [id]
     );
 
-    return products[0] || null;
+    const product = products[0];
+
+    if (!product) {
+        return null;
+    }
+
+    return {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        expiration_date: product.expiration_date,
+        created_at: product.created_at,
+
+        category: product.category_id
+            ? {
+                id: product.category_id,
+                name: product.category_name
+            }
+            : null
+    };
 }
 
 /*
