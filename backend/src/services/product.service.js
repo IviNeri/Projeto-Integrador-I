@@ -22,11 +22,14 @@ async function create(productData) {
 | Lista produtos
 |--------------------------------------------------------------------------
 */
-async function findAll(page, limit) {
+async function findAll(page, search) {
+
+    const limit = 15;
 
     const data = await productModel.findAll(
         page,
-        limit
+        limit,
+        search
     );
 
     return data;

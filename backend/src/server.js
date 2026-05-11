@@ -20,6 +20,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const productRoutes = require('./routes/product.routes');
 const categoryRoutes = require('./routes/category.routes');
+const movementRoutes = require('./routes/movement.routes');
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +47,7 @@ app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
 app.use('/categories', categoryRoutes);
+app.use('/movements', movementRoutes);
 
 /*
 |--------------------------------------------------------------------------

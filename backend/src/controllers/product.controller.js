@@ -58,9 +58,9 @@ async function findAll(req, res) {
 
     try {
 
-        const page = Math.max(
-            Number(req.query.page) || 1,
-            1);
+        const page = Number(req.query.page) || 1;
+
+        const search = req.query.search || '';
 
         const limit = 15;
 
@@ -69,11 +69,12 @@ async function findAll(req, res) {
             total
         } = await productService.findAll(
             page,
-            limit
+            search
         );
 
         return res.json({
             data: products,
+
             pagination: {
                 page,
                 limit,

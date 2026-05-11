@@ -44,9 +44,11 @@ async function create(productData) {
 | Lista produtos
 |--------------------------------------------------------------------------
 */
-async function findAll(page, limit) {
+async function findAll(page, limit, search = '') {
 
     const offset = (page - 1) * limit;
+
+    const searchTerm = `%${search}%`;
 
     const [products] = await connection.execute(
         `
@@ -68,12 +70,14 @@ async function findAll(page, limit) {
             AND categories.deleted_at IS NULL
 
         WHERE products.deleted_at IS NULL
+        AND products.name LIKE ?
 
         ORDER BY products.created_at DESC
 
         LIMIT ? OFFSET ?
         `,
         [
+            searchTerm,
             limit,
             offset
         ]
@@ -103,9 +107,13 @@ async function findAll(page, limit) {
     const [totalResult] = await connection.execute(
         `
         SELECT COUNT(*) as total
+
         FROM products
+
         WHERE deleted_at IS NULL
-        `
+        AND name LIKE ?
+        `,
+        [searchTerm]
     );
 
     return {
