@@ -1,13 +1,25 @@
 require('dotenv').config();
 
+/*
+|--------------------------------------------------------------------------
+| Variáveis de configuração
+|--------------------------------------------------------------------------
+|
+*/
 const express = require('express');
-
 const connection = require('./config/database');
+const app = express();
 
+/*
+|--------------------------------------------------------------------------
+| Requires das rotas
+|--------------------------------------------------------------------------
+|
+*/
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const productRoutes = require('./routes/product.routes');
 
-const app = express();
 
 /*
 |--------------------------------------------------------------------------
@@ -31,19 +43,8 @@ app.use(express.json());
 |
 */
 app.use('/auth', authRoutes);
-
-/*
-|--------------------------------------------------------------------------
-| Rotas de usuários
-|--------------------------------------------------------------------------
-|
-| Rotas relacionadas ao usuário autenticado
-|
-| Exemplo:
-| GET /users/me
-|
-*/
 app.use('/users', userRoutes);
+app.use('/products', productRoutes);
 
 /*
 |--------------------------------------------------------------------------
