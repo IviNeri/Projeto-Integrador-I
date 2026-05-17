@@ -40,9 +40,9 @@ async function create(productData) {
 }
 
 async function findAll(page, limit, search = '', filters = {}) {
-    const finalPage  = Math.max(1,  parseInt(page,  10) || 1);
-    const finalLimit = Math.max(1,  parseInt(limit, 10) || 10);
-    const offset     = (finalPage - 1) * finalLimit;
+    const finalPage = Math.max(1, parseInt(page, 10) || 1);
+    const finalLimit = Math.max(1, parseInt(limit, 10) || 10);
+    const offset = (finalPage - 1) * finalLimit;
 
     const searchTerm = `%${search ?? ''}%`;
 
@@ -55,12 +55,12 @@ async function findAll(page, limit, search = '', filters = {}) {
 
     if (filters?.categoryId) {
         conditions.push('products.category_id = ?');
-        values.push(parseInt(filters.categoryId, 10)); // FK deve ser inteiro
+        values.push(parseInt(filters.categoryId, 10));
     }
 
     if (filters?.minPrice !== null && filters?.minPrice !== undefined && filters.minPrice !== '') {
         conditions.push('products.price >= ?');
-        values.push(Number(filters.minPrice)); // float é aceito pelo MySQL aqui
+        values.push(Number(filters.minPrice));
     }
 
     if (filters?.maxPrice !== null && filters?.maxPrice !== undefined && filters.maxPrice !== '') {
@@ -103,9 +103,9 @@ async function findAll(page, limit, search = '', filters = {}) {
 
         ORDER BY products.created_at DESC
 
-        LIMIT ? OFFSET ?
+        LIMIT ${finalLimit} OFFSET ${offset}
         `,
-        [...values, finalLimit, offset] // finalLimit e offset agora são inteiros garantidos
+        values // sem finalLimit e offset aqui
     );
 
     const formattedProducts = products.map(product => ({
