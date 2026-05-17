@@ -40,13 +40,9 @@ async function create(productData) {
 }
 
 async function findAll(page, limit, search = '', filters = {}) {
-    const safePage = Number(page);
-    const safeLimit = Number(limit);
-
-    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
-    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 10;
-
-    const offset = (finalPage - 1) * finalLimit;
+    const finalPage  = Math.max(1,  parseInt(page,  10) || 1);
+    const finalLimit = Math.max(1,  parseInt(limit, 10) || 10);
+    const offset     = (finalPage - 1) * finalLimit;
 
     const searchTerm = `%${search ?? ''}%`;
 
@@ -59,17 +55,17 @@ async function findAll(page, limit, search = '', filters = {}) {
 
     if (filters?.categoryId) {
         conditions.push('products.category_id = ?');
-        values.push(filters.categoryId);
+        values.push(parseInt(filters.categoryId, 10)); // FK deve ser inteiro
     }
 
     if (filters?.minPrice !== null && filters?.minPrice !== undefined && filters.minPrice !== '') {
         conditions.push('products.price >= ?');
-        values.push(filters.minPrice);
+        values.push(Number(filters.minPrice)); // float é aceito pelo MySQL aqui
     }
 
     if (filters?.maxPrice !== null && filters?.maxPrice !== undefined && filters.maxPrice !== '') {
         conditions.push('products.price <= ?');
-        values.push(filters.maxPrice);
+        values.push(Number(filters.maxPrice));
     }
 
     if (filters?.expirationFrom) {
@@ -109,11 +105,7 @@ async function findAll(page, limit, search = '', filters = {}) {
 
         LIMIT ? OFFSET ?
         `,
-        [
-            ...values,
-            finalLimit,
-            offset
-        ]
+        [...values, finalLimit, offset] // finalLimit e offset agora são inteiros garantidos
     );
 
     const formattedProducts = products.map(product => ({
@@ -124,25 +116,18 @@ async function findAll(page, limit, search = '', filters = {}) {
         expiration_date: product.expiration_date,
         created_at: product.created_at,
         category: product.category_id
-            ? {
-                id: product.category_id,
-                name: product.category_name
-            }
+            ? { id: product.category_id, name: product.category_name }
             : null
     }));
 
-    const [totalResult] = await connection.execute(
-        `
-        SELECT COUNT(*) as total
-        FROM products
-        ${whereClause}
-        `,
+    const [[{ total }]] = await connection.execute(
+        `SELECT COUNT(*) as total FROM products ${whereClause}`,
         values
     );
 
     return {
         products: formattedProducts,
-        total: totalResult[0].total
+        total
     };
 }
 
