@@ -36,19 +36,9 @@ async function create(data) {
     return result.insertId;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Lista movimentações
-|--------------------------------------------------------------------------
-*/
 async function findAll(page, limit) {
-
-    const safePage = Number(page);
-    const safeLimit = Number(limit);
-
-    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
-    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 15;
-
+    const finalPage = Math.max(1, parseInt(page, 10) || 1);
+    const finalLimit = Math.max(1, parseInt(limit, 10) || 15);
     const offset = (finalPage - 1) * finalLimit;
 
     const [movements] = await connection.execute(
@@ -75,12 +65,8 @@ async function findAll(page, limit) {
 
         ORDER BY movements.created_at DESC
 
-        LIMIT ? OFFSET ?
-        `,
-        [
-            finalLimit,
-            offset
-        ]
+        LIMIT ${finalLimit} OFFSET ${offset}
+        `
     );
 
     const formattedMovements = movements.map(movement => ({
@@ -88,28 +74,23 @@ async function findAll(page, limit) {
         type: movement.type,
         quantity: movement.quantity,
         created_at: movement.created_at,
-
         product: {
             id: movement.product_id,
             name: movement.product_name
         },
-
         user: {
             id: movement.user_id,
             name: movement.user_name
         }
     }));
 
-    const [totalResult] = await connection.execute(
-        `
-        SELECT COUNT(*) as total
-        FROM movements
-        `
+    const [[{ total }]] = await connection.execute(
+        `SELECT COUNT(*) as total FROM movements`
     );
 
     return {
         movements: formattedMovements,
-        total: totalResult[0].total
+        total
     };
 }
 

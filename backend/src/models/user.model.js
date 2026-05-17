@@ -81,20 +81,9 @@ async function create(userData) {
     return result.insertId;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Lista usuários
-|--------------------------------------------------------------------------
-*/
 async function findAll(page, limit, search = '', filters = {}) {
-
-    // 🔥 proteção total pagination
-    const safePage = Number(page);
-    const safeLimit = Number(limit);
-
-    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
-    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 15;
-
+    const finalPage = Math.max(1, parseInt(page, 10) || 1);
+    const finalLimit = Math.max(1, parseInt(limit, 10) || 15);
     const offset = (finalPage - 1) * finalLimit;
 
     const searchTerm = `%${search ?? ''}%`;
@@ -104,10 +93,7 @@ async function findAll(page, limit, search = '', filters = {}) {
         '(name LIKE ? OR email LIKE ?)'
     ];
 
-    const values = [
-        searchTerm,
-        searchTerm
-    ];
+    const values = [searchTerm, searchTerm];
 
     if (filters?.role) {
         conditions.push('role = ?');
@@ -131,27 +117,19 @@ async function findAll(page, limit, search = '', filters = {}) {
 
         ORDER BY created_at DESC
 
-        LIMIT ? OFFSET ?
+        LIMIT ${finalLimit} OFFSET ${offset}
         `,
-        [
-            ...values,
-            finalLimit,
-            offset
-        ]
+        values
     );
 
-    const [totalResult] = await connection.execute(
-        `
-        SELECT COUNT(*) as total
-        FROM users
-        ${whereClause}
-        `,
+    const [[{ total }]] = await connection.execute(
+        `SELECT COUNT(*) as total FROM users ${whereClause}`,
         values
     );
 
     return {
         users,
-        total: totalResult[0].total
+        total
     };
 }
 

@@ -20,19 +20,9 @@ async function create(data) {
     return result.insertId;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Listar categorias
-|--------------------------------------------------------------------------
-*/
 async function findAll(page, limit, search = '') {
-
-    const safePage = Number(page);
-    const safeLimit = Number(limit);
-
-    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
-    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 15;
-
+    const finalPage = Math.max(1, parseInt(page, 10) || 1);
+    const finalLimit = Math.max(1, parseInt(limit, 10) || 15);
     const offset = (finalPage - 1) * finalLimit;
 
     const searchTerm = `%${search ?? ''}%`;
@@ -52,30 +42,21 @@ async function findAll(page, limit, search = '') {
         FROM categories
         ${whereClause}
         ORDER BY created_at DESC
-        LIMIT ? OFFSET ?
+        LIMIT ${finalLimit} OFFSET ${offset}
         `,
-        [
-            ...values,
-            finalLimit,
-            offset
-        ]
+        values
     );
 
-    const [totalResult] = await connection.execute(
-        `
-        SELECT COUNT(*) as total
-        FROM categories
-        ${whereClause}
-        `,
+    const [[{ total }]] = await connection.execute(
+        `SELECT COUNT(*) as total FROM categories ${whereClause}`,
         values
     );
 
     return {
         categories,
-        total: totalResult[0].total
+        total
     };
 }
-
 /*
 |--------------------------------------------------------------------------
 | Buscar por ID
