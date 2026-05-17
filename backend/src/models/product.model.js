@@ -39,16 +39,15 @@ async function create(productData) {
     return result.insertId;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Lista produtos
-|--------------------------------------------------------------------------
-*/
 async function findAll(page, limit, search = '', filters = {}) {
 
-    const offset = (page - 1) * limit;
+    // 🔥 proteção contra undefined / NaN
+    const safePage = Number(page) > 0 ? Number(page) : 1;
+    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
 
-    const searchTerm = `%${search}%`;
+    const offset = (safePage - 1) * safeLimit;
+
+    const searchTerm = `%${search ?? ''}%`;
 
     const conditions = [
         'products.deleted_at IS NULL',
@@ -57,27 +56,27 @@ async function findAll(page, limit, search = '', filters = {}) {
 
     const values = [searchTerm];
 
-    if (filters.categoryId) {
+    if (filters?.categoryId) {
         conditions.push('products.category_id = ?');
         values.push(filters.categoryId);
     }
 
-    if (filters.minPrice !== null && filters.minPrice !== undefined) {
+    if (filters?.minPrice !== null && filters?.minPrice !== undefined && filters.minPrice !== '') {
         conditions.push('products.price >= ?');
         values.push(filters.minPrice);
     }
 
-    if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+    if (filters?.maxPrice !== null && filters?.maxPrice !== undefined && filters.maxPrice !== '') {
         conditions.push('products.price <= ?');
         values.push(filters.maxPrice);
     }
 
-    if (filters.expirationFrom) {
+    if (filters?.expirationFrom) {
         conditions.push('products.expiration_date >= ?');
         values.push(filters.expirationFrom);
     }
 
-    if (filters.expirationTo) {
+    if (filters?.expirationTo) {
         conditions.push('products.expiration_date <= ?');
         values.push(filters.expirationTo);
     }
@@ -111,38 +110,30 @@ async function findAll(page, limit, search = '', filters = {}) {
         `,
         [
             ...values,
-            limit,
+            safeLimit,
             offset
         ]
     );
 
-    const formattedProducts = products.map(
-        product => {
-
-            return {
-                id: product.id,
-                name: product.name,
-                price: product.price,
-                stock: product.stock,
-                expiration_date: product.expiration_date,
-                created_at: product.created_at,
-
-                category: product.category_id
-                    ? {
-                        id: product.category_id,
-                        name: product.category_name
-                    }
-                    : null
-            };
-        }
-    );
+    const formattedProducts = products.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        expiration_date: product.expiration_date,
+        created_at: product.created_at,
+        category: product.category_id
+            ? {
+                id: product.category_id,
+                name: product.category_name
+            }
+            : null
+    }));
 
     const [totalResult] = await connection.execute(
         `
         SELECT COUNT(*) as total
-
         FROM products
-
         ${whereClause}
         `,
         values

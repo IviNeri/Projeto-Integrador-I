@@ -57,9 +57,30 @@ async function findAll(req, res) {
 
     try {
 
-        const categories = await categoryService.findAll();
+        const page = Number(req.query.page) || 1;
+        const search = req.query.search || '';
 
-        return res.json(categories);
+        const limit = 15;
+
+        const {
+            categories,
+            total
+        } = await categoryService.findAll(
+            page,
+            limit,
+            search
+        );
+
+        return res.json({
+            data: categories,
+
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
 
     } catch (error) {
 

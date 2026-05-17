@@ -15,9 +15,17 @@ async function create(data) {
 | Listar categorias
 |--------------------------------------------------------------------------
 */
-async function findAll() {
+async function findAll(page, search) {
 
-    return await categoryModel.findAll();
+    const limit = 15;
+
+    const data = await categoryModel.findAll(
+        page,
+        limit,
+        search
+    );
+
+    return data;
 }
 
 /*

@@ -25,18 +25,53 @@ async function create(data) {
 | Listar categorias
 |--------------------------------------------------------------------------
 */
-async function findAll() {
+async function findAll(page, limit, search = '') {
 
-    const [rows] = await connection.execute(
+    const safePage = Number(page) > 0 ? Number(page) : 1;
+    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
+    const offset = (safePage - 1) * safeLimit;
+
+    const searchTerm = `%${search ?? ''}%`;
+
+    const conditions = [
+        'deleted_at IS NULL',
+        'name LIKE ?'
+    ];
+
+    const values = [searchTerm];
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+    const [categories] = await connection.execute(
         `
         SELECT id, name, created_at
         FROM categories
-        WHERE deleted_at IS NULL
+        ${whereClause}
         ORDER BY created_at DESC
-        `
+        LIMIT ? OFFSET ?
+        `,
+        [
+            ...values,
+            safeLimit,
+            offset
+        ]
     );
 
-    return rows;
+    const [totalResult] = await connection.execute(
+        `
+        SELECT COUNT(*) as total
+        FROM categories
+        ${whereClause}
+        `,
+        values
+    );
+
+    return {
+        categories,
+        total: totalResult[0].total,
+        page: safePage,
+        limit: safeLimit
+    };
 }
 
 /*
