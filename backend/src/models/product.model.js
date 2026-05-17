@@ -9,8 +9,8 @@ async function create(productData) {
 
     const {
         name,
-        price,
-        stock,
+        price = 0,
+        stock = 0,
         category_id,
         expiration_date
     } = productData;
@@ -44,11 +44,45 @@ async function create(productData) {
 | Lista produtos
 |--------------------------------------------------------------------------
 */
-async function findAll(page, limit, search = '') {
+async function findAll(page, limit, search = '', filters = {}) {
 
     const offset = (page - 1) * limit;
 
     const searchTerm = `%${search}%`;
+
+    const conditions = [
+        'products.deleted_at IS NULL',
+        'products.name LIKE ?'
+    ];
+
+    const values = [searchTerm];
+
+    if (filters.categoryId) {
+        conditions.push('products.category_id = ?');
+        values.push(filters.categoryId);
+    }
+
+    if (filters.minPrice !== null && filters.minPrice !== undefined) {
+        conditions.push('products.price >= ?');
+        values.push(filters.minPrice);
+    }
+
+    if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+        conditions.push('products.price <= ?');
+        values.push(filters.maxPrice);
+    }
+
+    if (filters.expirationFrom) {
+        conditions.push('products.expiration_date >= ?');
+        values.push(filters.expirationFrom);
+    }
+
+    if (filters.expirationTo) {
+        conditions.push('products.expiration_date <= ?');
+        values.push(filters.expirationTo);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     const [products] = await connection.execute(
         `
@@ -69,15 +103,14 @@ async function findAll(page, limit, search = '') {
             ON categories.id = products.category_id
             AND categories.deleted_at IS NULL
 
-        WHERE products.deleted_at IS NULL
-        AND products.name LIKE ?
+        ${whereClause}
 
         ORDER BY products.created_at DESC
 
         LIMIT ? OFFSET ?
         `,
         [
-            searchTerm,
+            ...values,
             limit,
             offset
         ]
@@ -110,10 +143,9 @@ async function findAll(page, limit, search = '') {
 
         FROM products
 
-        WHERE deleted_at IS NULL
-        AND name LIKE ?
+        ${whereClause}
         `,
-        [searchTerm]
+        values
     );
 
     return {

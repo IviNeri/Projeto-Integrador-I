@@ -21,9 +21,10 @@ const createProductSchema = z.object({
         .number({
             message: 'Preço deve ser um número'
         })
-        .positive({
-            message: 'Preço deve ser maior que zero'
-        }),
+        .min(0, {
+            message: 'Preço deve ser maior ou igual a zero'
+        })
+        .optional(),
 
     stock: z
         .coerce
@@ -35,7 +36,8 @@ const createProductSchema = z.object({
         })
         .min(0, {
             message: 'Estoque não pode ser negativo'
-        }),
+        })
+        .optional(),
 
     category_id: z
         .coerce

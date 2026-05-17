@@ -8,22 +8,52 @@ const authMiddleware = require('../middlewares/auth.middleware');
 
 const authorize = require('../middlewares/authorize.middleware');
 
+/*
+|--------------------------------------------------------------------------
+| Lista usuários
+|--------------------------------------------------------------------------
+*/
 router.get(
-    '/me',
+    '/',
     authMiddleware,
-    userController.me
+    authorize(['proprietario']),
+    userController.findAll
 );
 
 /*
 |--------------------------------------------------------------------------
-| Rota apenas para administradores
+| Busca usuário por ID
 |--------------------------------------------------------------------------
 */
 router.get(
-    '/admin',
+    '/:id',
     authMiddleware,
     authorize(['proprietario']),
-    userController.admin
+    userController.findById
+);
+
+/*
+|--------------------------------------------------------------------------
+| Cria usuário
+|--------------------------------------------------------------------------
+*/
+router.post(
+    '/',
+    authMiddleware,
+    authorize(['proprietario']),
+    userController.create
+);
+
+/*
+|--------------------------------------------------------------------------
+| Atualiza usuário
+|--------------------------------------------------------------------------
+*/
+router.put(
+    '/:id',
+    authMiddleware,
+    authorize(['proprietario']),
+    userController.update
 );
 
 module.exports = router;

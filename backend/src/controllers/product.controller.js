@@ -19,8 +19,25 @@ async function create(req, res) {
         | Validação dos dados
         |--------------------------------------------------------------------------
         */
+        const payload = {
+            ...req.body,
+            price:
+                req.body.price === undefined ||
+                req.body.price === null ||
+                req.body.price === ''
+                    ? 0
+                    : req.body.price,
+            stock:
+                req.body.stock === undefined ||
+                req.body.stock === null ||
+                req.body.stock === ''
+                    ? 0
+                    : req.body.stock,
+            expiration_date: req.body.expiration_date ?? null
+        };
+
         const validation = createProductSchema.safeParse(
-            req.body
+            payload
         );
 
         if (!validation.success) {
@@ -31,7 +48,7 @@ async function create(req, res) {
         }
 
         const product = await productService.create(
-            req.body
+            payload
         );
 
         return res.status(201).json({
@@ -62,6 +79,26 @@ async function findAll(req, res) {
 
         const search = req.query.search || '';
 
+        const parseNumber = (value) => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        const categoryId = parseNumber(req.query.category_id);
+        const minPrice = parseNumber(req.query.min_price);
+        const maxPrice = parseNumber(req.query.max_price);
+
+        const expirationFrom = req.query.expiration_from || null;
+        const expirationTo = req.query.expiration_to || null;
+
+        const filters = {
+            categoryId,
+            minPrice,
+            maxPrice,
+            expirationFrom,
+            expirationTo
+        };
+
         const limit = 15;
 
         const {
@@ -69,7 +106,8 @@ async function findAll(req, res) {
             total
         } = await productService.findAll(
             page,
-            search
+            search,
+            filters
         );
 
         return res.json({

@@ -8,7 +8,13 @@ const connection = require('../config/database');
 async function findByEmail(email) {
 
     const [users] = await connection.query(
-        'SELECT * FROM users WHERE email = ? LIMIT 1',
+        `
+        SELECT *
+        FROM users
+        WHERE email = ?
+        AND deleted_at IS NULL
+        LIMIT 1
+        `,
         [email]
     );
 
@@ -23,7 +29,13 @@ async function findByEmail(email) {
 async function findByCpf(cpf) {
 
     const [users] = await connection.query(
-        'SELECT * FROM users WHERE cpf = ? LIMIT 1',
+        `
+        SELECT *
+        FROM users
+        WHERE cpf = ?
+        AND deleted_at IS NULL
+        LIMIT 1
+        `,
         [cpf]
     );
 
@@ -45,9 +57,10 @@ async function create(userData) {
         role
     } = userData;
 
-    const [result] = await connection.query(
+    const [result] = await connection.execute(
         `
-        INSERT INTO users (
+        INSERT INTO users
+        (
             name,
             email,
             cpf,
@@ -68,8 +81,165 @@ async function create(userData) {
     return result.insertId;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Lista usuários
+|--------------------------------------------------------------------------
+*/
+async function findAll(page, limit, search = '', filters = {}) {
+
+    const offset = (page - 1) * limit;
+
+    const searchTerm = `%${search}%`;
+
+    const conditions = [
+        'deleted_at IS NULL',
+        '(name LIKE ? OR email LIKE ?)'
+    ];
+
+    const values = [
+        searchTerm,
+        searchTerm
+    ];
+
+    if (filters.role) {
+
+        conditions.push('role = ?');
+
+        values.push(filters.role);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+    const [users] = await connection.execute(
+        `
+        SELECT
+            id,
+            name,
+            email,
+            cpf,
+            role,
+            created_at
+        FROM users
+
+        ${whereClause}
+
+        ORDER BY created_at DESC
+
+        LIMIT ? OFFSET ?
+        `,
+        [
+            ...values,
+            limit,
+            offset
+        ]
+    );
+
+    const [totalResult] = await connection.execute(
+        `
+        SELECT COUNT(*) as total
+
+        FROM users
+
+        ${whereClause}
+        `,
+        values
+    );
+
+    return {
+        users,
+        total: totalResult[0].total
+    };
+}
+
+/*
+|--------------------------------------------------------------------------
+| Busca usuário por ID
+|--------------------------------------------------------------------------
+*/
+async function findById(id) {
+
+    const [users] = await connection.execute(
+        `
+        SELECT
+            id,
+            name,
+            email,
+            cpf,
+            role,
+            created_at
+        FROM users
+
+        WHERE id = ?
+        AND deleted_at IS NULL
+
+        LIMIT 1
+        `,
+        [id]
+    );
+
+    return users[0] || null;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Atualiza usuário
+|--------------------------------------------------------------------------
+*/
+async function update(id, userData) {
+
+    const fields = [];
+
+    const values = [];
+
+    Object.entries(userData).forEach(
+        ([key, value]) => {
+
+            fields.push(`${key} = ?`);
+
+            values.push(value);
+        }
+    );
+
+    values.push(id);
+
+    await connection.execute(
+        `
+        UPDATE users
+        SET ${fields.join(', ')}
+        WHERE id = ?
+        AND deleted_at IS NULL
+        `,
+        values
+    );
+
+    return findById(id);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Remove usuário (soft delete)
+|--------------------------------------------------------------------------
+*/
+async function remove(id) {
+
+    await connection.execute(
+        `
+        UPDATE users
+        SET deleted_at = NOW()
+        WHERE id = ?
+        AND deleted_at IS NULL
+        `,
+        [id]
+    );
+}
+
 module.exports = {
     findByEmail,
     findByCpf,
-    create
+    create,
+    findAll,
+    findById,
+    update,
+    remove
 };
