@@ -23,14 +23,14 @@ async function create(req, res) {
             ...req.body,
             price:
                 req.body.price === undefined ||
-                req.body.price === null ||
-                req.body.price === ''
+                    req.body.price === null ||
+                    req.body.price === ''
                     ? 0
                     : req.body.price,
             stock:
                 req.body.stock === undefined ||
-                req.body.stock === null ||
-                req.body.stock === ''
+                    req.body.stock === null ||
+                    req.body.stock === ''
                     ? 0
                     : req.body.stock,
             expiration_date: req.body.expiration_date ?? null
@@ -66,17 +66,11 @@ async function create(req, res) {
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Lista produtos
-|--------------------------------------------------------------------------
-*/
 async function findAll(req, res) {
 
     try {
 
         const page = Number(req.query.page) || 1;
-
         const search = req.query.search || '';
 
         const parseNumber = (value) => {
@@ -101,18 +95,15 @@ async function findAll(req, res) {
 
         const limit = 15;
 
-        const {
-            products,
-            total
-        } = await productService.findAll(
+        const { products, total } = await productService.findAll(
             page,
+            limit,
             search,
             filters
         );
 
         return res.json({
             data: products,
-
             pagination: {
                 page,
                 limit,

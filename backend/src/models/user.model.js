@@ -88,9 +88,16 @@ async function create(userData) {
 */
 async function findAll(page, limit, search = '', filters = {}) {
 
-    const offset = (page - 1) * limit;
+    // 🔥 proteção total pagination
+    const safePage = Number(page);
+    const safeLimit = Number(limit);
 
-    const searchTerm = `%${search}%`;
+    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
+    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 15;
+
+    const offset = (finalPage - 1) * finalLimit;
+
+    const searchTerm = `%${search ?? ''}%`;
 
     const conditions = [
         'deleted_at IS NULL',
@@ -102,10 +109,8 @@ async function findAll(page, limit, search = '', filters = {}) {
         searchTerm
     ];
 
-    if (filters.role) {
-
+    if (filters?.role) {
         conditions.push('role = ?');
-
         values.push(filters.role);
     }
 
@@ -130,7 +135,7 @@ async function findAll(page, limit, search = '', filters = {}) {
         `,
         [
             ...values,
-            limit,
+            finalLimit,
             offset
         ]
     );
@@ -138,9 +143,7 @@ async function findAll(page, limit, search = '', filters = {}) {
     const [totalResult] = await connection.execute(
         `
         SELECT COUNT(*) as total
-
         FROM users
-
         ${whereClause}
         `,
         values

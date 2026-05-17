@@ -84,10 +84,9 @@ async function findAll(req, res) {
     try {
 
         const page = Number(req.query.page) || 1;
-
         const search = req.query.search || '';
 
-        const role = req.query.role || '';
+        const role = req.query.role || null;
 
         const filters = {
             role

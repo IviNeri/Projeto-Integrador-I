@@ -8,22 +8,20 @@ const connection = require('../config/database');
 */
 async function findAll(page, search = '', filters = {}) {
 
+    const safePage = Number(page);
+
+    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
+
     const limit = 15;
 
-    const {
-        users,
-        total
-    } = await userModel.findAll(
-        page,
+    const data = await userModel.findAll(
+        finalPage,
         limit,
         search,
         filters
     );
 
-    return {
-        users,
-        total
-    };
+    return data;
 }
 
 /*

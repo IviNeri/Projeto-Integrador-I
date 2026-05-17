@@ -43,7 +43,13 @@ async function create(data) {
 */
 async function findAll(page, limit) {
 
-    const offset = (page - 1) * limit;
+    const safePage = Number(page);
+    const safeLimit = Number(limit);
+
+    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
+    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 15;
+
+    const offset = (finalPage - 1) * finalLimit;
 
     const [movements] = await connection.execute(
         `
@@ -72,32 +78,27 @@ async function findAll(page, limit) {
         LIMIT ? OFFSET ?
         `,
         [
-            limit,
+            finalLimit,
             offset
         ]
     );
 
-    const formattedMovements = movements.map(
-        movement => {
+    const formattedMovements = movements.map(movement => ({
+        id: movement.id,
+        type: movement.type,
+        quantity: movement.quantity,
+        created_at: movement.created_at,
 
-            return {
-                id: movement.id,
-                type: movement.type,
-                quantity: movement.quantity,
-                created_at: movement.created_at,
+        product: {
+            id: movement.product_id,
+            name: movement.product_name
+        },
 
-                product: {
-                    id: movement.product_id,
-                    name: movement.product_name
-                },
-
-                user: {
-                    id: movement.user_id,
-                    name: movement.user_name
-                }
-            };
+        user: {
+            id: movement.user_id,
+            name: movement.user_name
         }
-    );
+    }));
 
     const [totalResult] = await connection.execute(
         `

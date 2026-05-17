@@ -67,7 +67,6 @@ async function findAll(req, res) {
             total
         } = await categoryService.findAll(
             page,
-            limit,
             search
         );
 

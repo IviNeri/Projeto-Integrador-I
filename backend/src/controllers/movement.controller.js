@@ -73,6 +73,7 @@ async function findAll(req, res) {
     try {
 
         const page = Number(req.query.page) || 1;
+        const limit = 15;
 
         const {
             movements,
@@ -84,9 +85,9 @@ async function findAll(req, res) {
 
             pagination: {
                 page,
-                limit: 15,
+                limit,
                 total,
-                totalPages: Math.ceil(total / 15)
+                totalPages: Math.ceil(total / limit)
             }
         });
 

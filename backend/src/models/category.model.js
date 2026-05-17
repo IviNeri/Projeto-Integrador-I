@@ -27,9 +27,13 @@ async function create(data) {
 */
 async function findAll(page, limit, search = '') {
 
-    const safePage = Number(page) > 0 ? Number(page) : 1;
-    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
-    const offset = (safePage - 1) * safeLimit;
+    const safePage = Number(page);
+    const safeLimit = Number(limit);
+
+    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
+    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 15;
+
+    const offset = (finalPage - 1) * finalLimit;
 
     const searchTerm = `%${search ?? ''}%`;
 
@@ -52,7 +56,7 @@ async function findAll(page, limit, search = '') {
         `,
         [
             ...values,
-            safeLimit,
+            finalLimit,
             offset
         ]
     );
@@ -68,9 +72,7 @@ async function findAll(page, limit, search = '') {
 
     return {
         categories,
-        total: totalResult[0].total,
-        page: safePage,
-        limit: safeLimit
+        total: totalResult[0].total
     };
 }
 

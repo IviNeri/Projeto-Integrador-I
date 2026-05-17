@@ -40,12 +40,13 @@ async function create(productData) {
 }
 
 async function findAll(page, limit, search = '', filters = {}) {
+    const safePage = Number(page);
+    const safeLimit = Number(limit);
 
-    // 🔥 proteção contra undefined / NaN
-    const safePage = Number(page) > 0 ? Number(page) : 1;
-    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
+    const finalPage = Number.isFinite(safePage) && safePage > 0 ? safePage : 1;
+    const finalLimit = Number.isFinite(safeLimit) && safeLimit > 0 ? safeLimit : 10;
 
-    const offset = (safePage - 1) * safeLimit;
+    const offset = (finalPage - 1) * finalLimit;
 
     const searchTerm = `%${search ?? ''}%`;
 
@@ -110,7 +111,7 @@ async function findAll(page, limit, search = '', filters = {}) {
         `,
         [
             ...values,
-            safeLimit,
+            finalLimit,
             offset
         ]
     );

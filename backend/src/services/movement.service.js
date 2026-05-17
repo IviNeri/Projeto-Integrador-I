@@ -107,8 +107,10 @@ async function findAll(page) {
 
     const limit = 15;
 
+    const safePage = Number(page) > 0 ? Number(page) : 1;
+
     return await movementModel.findAll(
-        page,
+        safePage,
         limit
     );
 }
